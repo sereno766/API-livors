@@ -1,26 +1,58 @@
 from flask import Flask, jsonify, request
+import sqlite3
 
 app = Flask(__name__)
 
-livros = [
-    {
-        'id': 1,
-        'titulo': 'O senhor dos aneis',
-        'autor' : ' J.R.R Tolkin'
-    },
+def inicializar_banco_de_dados():
+    conn = sqlite3.connect('livros.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS  livros (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            titulo TEXT NOT NULL,
+            autor TEXT NOT NULL
+        )
+    ''') 
+    conn.commit()
+    conn.close()
 
-    {
-        'id': 2,
-        'titulo': 'Herry potter ',
-        'autor' : ' J.K Hpwling'
-    },
-    {
-        'id': 3,
-        'titulo': 'Habitos Atomicos',
-        'autor' : ' Jmaes Clear'
-    },
-]
+def conectar_banco():
+    conn = sqlite3.connect('livros.db')
+    return conn
 
+inicializar_banco_de_dados()
+
+@app.route('/livros',methods=['GET'])
+def obter_livro():
+    conn= conectar_banco()
+    cursor= conn.cursor()
+    cursor.execute('SELECT * FROM livros')
+    livros = cursor.fetchall()
+    conn.close()
+
+    livros_json = [{'id': row[0], 'titulo': row[1], 'autor': row[2]} for row in livros]
+    if not livros_json:
+        return jsonify({'mensagem':'não há livros',}), 404
+    
+    return jsonify(livros_json)
+@app.route('/livros/<int:id>',methods=['GET'])
+def obter_livors_por_id(id):
+    conn = conectar_banco()
+    cursor = conn.cursor()
+    cursor.execute('SELEC * FROM livros WHERE id = ?', (id,))
+    livro = cursor.fetchone()
+    conn.close()
+    if livro:
+        return jsonify({'id':livro[0],'titulo':livro[1],'autor':livro[2]})
+    return jsonify({'error':'livro não encontrado'}),404
+
+
+
+
+
+app.run(port=5000,host='localhost',debug=True)
+# --------codigo antigo sem o uso de banco de datos -------------
+'''
 @app.route('/livros',methods=['GET'])
 def obter_livros():
     return jsonify(livros)
@@ -53,5 +85,4 @@ def remove_livro(id):
             del livros[indice]
             return jsonify(livros)
     return jsonify('error livro não encontrado')
-
-app.run(port=5000,host='localhost',debug=True)
+'''
