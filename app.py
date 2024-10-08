@@ -57,46 +57,28 @@ def adicionar_livro():
     return jsonify({'message': 'Livro adicionado com sucesso!'})
 
 @app.route('/livros/<int:id>', methods=['PUT'])
-def editra_livro_por_id(id):
+def editar_livro_por_id(id):
     livro_alterado = request.get_json()
     conn = conectar_banco()
     cursor =conn.cursor()
-    
+    cursor.execute('UPDATE livros Set titulo = ?, autor = ? WHERE id = ?', (livro_alterado['titulo'], livro_alterado['autor'], id ))
+    conn.commit()
+    conn.close()
 
+    if cursor.rowcount == 0:
+        return jsonify ({'error': 'livro não encontrado'}), 404
+    return jsonify({'message': 'livro atualizado com sucesso'})
+
+@app.route('/livros/<int:id>', methods=['DELETE'])
+def remove_livro(id):
+    conn = conectar_banco()
+    cursor = conn.cursor()
+    cursor.execute('DELETE FROM livros WHERE id = ?', (id,))
+    conn.commit()
+    conn.close()
+
+    if cursor.rowcount == 0:
+        return jsonify({'error': 'Livro não encontrado'}), 404
+    return jsonify({'message': 'Livro removido com sucesso!'})
 
 app.run(port=5000,host='localhost',debug=True)
-# --------codigo antigo sem o uso de banco de datos -------------
-'''
-@app.route('/livros',methods=['GET'])
-def obter_livros():
-    return jsonify(livros)
-
-@app.route('/livros/<int:id>',methods=['GET'])
-def obeter_livro_por_id(id):
-    for livro in livros:
-        if livro.get('id') == id:
-            return jsonify(livro)
-    return jsonify('error livro não encontrado')
-
-@app.route('/livros/<int:id>',methods=['PUT'])
-def editar_livro_por_id(id):
-    livro_alterado = request.get_json()
-    for indice,livro in enumerate(livros):
-        if livro.get('id') == id:
-            livros[indice].update(livro_alterado)
-            return jsonify(livros[indice])
-
-@app.route('/livros',methods=['POST'])
-def adicionar_novo_livro():
-    novo_livro = request.get_json()
-    livros.append(novo_livro)
-    return jsonify(livros)
-
-@app.route('/livros/<int:id>',methods=['DELETE'])
-def remove_livro(id):
-    for indice,livro in enumerate(livros):
-        if livro.get('id') == id:
-            del livros[indice]
-            return jsonify(livros)
-    return jsonify('error livro não encontrado')
-'''
