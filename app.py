@@ -46,8 +46,22 @@ def obter_livors_por_id(id):
         return jsonify({'id':livro[0],'titulo':livro[1],'autor':livro[2]})
     return jsonify({'error':'livro não encontrado'}),404
 
+@app.route('/livros', methods=['POST'])
+def adicionar_livro():
+    novo_livro = request.get_json()
+    conn = conectar_banco()
+    cursor = conn.cursor()
+    cursor.execute('INSERT INTO livros (titulo, autor) VALUES (?, ?)',(novo_livro['titulo'], novo_livro['autor']))
+    conn.commit()
+    conn.close()
+    return jsonify({'message': 'Livro adicionado com sucesso!'})
 
-
+@app.route('/livros/<int:id>', methods=['PUT'])
+def editra_livro_por_id(id):
+    livro_alterado = request.get_json()
+    conn = conectar_banco()
+    cursor =conn.cursor()
+    
 
 
 app.run(port=5000,host='localhost',debug=True)
